@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wordle/core/entities/letter.dart';
+import 'package:wordle/features/wordle/presentation/bloc/wordle_bloc.dart';
 
 const _azerty = [
   ['a', 'z', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -19,27 +22,35 @@ class Keyboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: _azerty
-          .map(
-            (keyrow) => Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: keyrow.map((letter) {
-                if (letter == 'DEL') {
-                  return _KeyBoardButton.delete(onTap: onDelete);
-                } else if (letter == 'ENTER') {
-                  return _KeyBoardButton.enter(onTap: onEnter);
-                }
-                return _KeyBoardButton(
-                  onTap: () => onKeyPressed(letter),
-                  letter: letter,
-                  backgroundColor: Colors.grey,
-                );
-              }).toList(),
-            ),
-          )
-          .toList(),
+    return BlocBuilder<WordleBloc, WordleState>(
+      builder: (context, state) {
+        if (state is! WordlePlaying) return const SizedBox();
+        final k = state.keyboardState();
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: _azerty
+              .map(
+                (keyrow) => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: keyrow.map((letter) {
+                    if (letter == 'DEL') {
+                      return _KeyBoardButton.delete(onTap: onDelete);
+                    } else if (letter == 'ENTER') {
+                      return _KeyBoardButton.enter(onTap: onEnter);
+                    }
+                    final l = k.any((e) => e.letter == letter)
+                        ? k.firstWhere((e) => e.letter == letter)
+                        : Letter(letter: letter, status: LetterStatus.key);
+                    return _KeyBoardButton(
+                      onTap: () => onKeyPressed(letter),
+                      letter: l,
+                    );
+                  }).toList(),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }
@@ -47,30 +58,26 @@ class Keyboard extends StatelessWidget {
 class _KeyBoardButton extends StatelessWidget {
   final double height;
   final double width;
-  final Color backgroundColor;
-  final String letter;
+  final Letter letter;
   final VoidCallback onTap;
   const _KeyBoardButton({
     super.key,
     this.height = 45,
     this.width = 40,
-    required this.backgroundColor,
     required this.letter,
     required this.onTap,
   });
   factory _KeyBoardButton.delete({required VoidCallback onTap}) {
     return _KeyBoardButton(
       width: 56,
-      backgroundColor: Colors.grey,
-      letter: 'DEL',
+      letter: const Letter(letter: 'DEL', status: LetterStatus.key),
       onTap: onTap,
     );
   }
   factory _KeyBoardButton.enter({required VoidCallback onTap}) {
     return _KeyBoardButton(
       width: 70,
-      backgroundColor: Colors.grey,
-      letter: 'ENTER',
+      letter: const Letter(letter: 'ENTER', status: LetterStatus.key),
       onTap: onTap,
     );
   }
@@ -80,7 +87,7 @@ class _KeyBoardButton extends StatelessWidget {
     return Padding(
         padding: const EdgeInsets.all(3),
         child: Material(
-            color: backgroundColor,
+            color: letter.backgroundColor,
             borderRadius: BorderRadius.circular(5),
             child: InkWell(
                 onTap: onTap,
@@ -89,7 +96,7 @@ class _KeyBoardButton extends StatelessWidget {
                   height: height,
                   alignment: Alignment.center,
                   child: Text(
-                    letter,
+                    letter.letter,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

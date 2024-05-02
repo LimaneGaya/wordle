@@ -15,3 +15,5 @@ class WordleAddLetter extends WordleEvent {
 class WordleDeleteLetter extends WordleEvent {}
 
 class WordleSubmit extends WordleEvent {}
+
+class WordleRestart extends WordleEvent {}

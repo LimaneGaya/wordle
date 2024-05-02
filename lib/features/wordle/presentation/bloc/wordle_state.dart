@@ -6,9 +6,7 @@ abstract class WordleState {
   final int index;
 
   WordleState(
-      {required this.guessedWords,
-      required this.index,
-      required this.wantedWord});
+      {required this.guessedWords, this.index = 0, required this.wantedWord});
 
   @override
   operator ==(covariant WordleState other) {
@@ -27,6 +25,15 @@ class WordlePlaying extends WordleState {
       {required super.guessedWords,
       required super.index,
       required super.wantedWord});
+  WordlePlaying.initial()
+      : super(
+            guessedWords: generateNewWord(height: 6, width: 5),
+            wantedWord: Word.fromString(WordList.getWord()));
+  Set<Letter> keyboardState() {
+    return Set<Letter>.from(
+      guessedWords.reversed.expand((e) => e.word),
+    )..remove(Letter.initial());
+  }
 }
 
 class WordleWon extends WordleState {

@@ -1,24 +1,28 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wordle/core/data/word_list.dart';
 import 'package:wordle/core/entities/letter.dart';
 import 'package:wordle/core/entities/word.dart';
+import 'package:wordle/core/utils/check_word.dart';
+import 'package:wordle/core/utils/cout_letters.dart';
+import 'package:wordle/core/utils/generate_new_words.dart';
 
 part 'wordle_event.dart';
 part 'wordle_state.dart';
 
 class WordleBloc extends Bloc<WordleEvent, WordleState> {
-  WordleBloc()
-      : super(WordlePlaying(
-            guessedWords: List.generate(
-              6,
-              (index) =>
-                  Word(List.generate(5, (index) => Letter.initial()).toList()),
-            ).toList(),
-            index: 0,
-            wantedWord: Word.fromString('mouse'))) {
+  WordleBloc() : super(WordlePlaying.initial()) {
     on<WordleAddLetter>(_wordleAddLetter);
     on<WordleDeleteLetter>(_wordleDeleteLetter);
     on<WordleSubmit>(_wordleSubmit);
+    on<WordleRestart>(_wordleRestart);
+  }
+
+  void _wordleRestart(
+    WordleRestart event,
+    Emitter<WordleState> emit,
+  ) {
+    emit(WordlePlaying.initial());
   }
 
   void _wordleDeleteLetter(
@@ -62,51 +66,18 @@ class WordleBloc extends Bloc<WordleEvent, WordleState> {
     final word = Word(coloredWord);
     final w = [...st.guessedWords]..[st.index] = word;
     if (word.toString() == st.wantedWord.toString()) {
-      print('win');
       return emit(WordleWon(
           guessedWords: w, index: st.index, wantedWord: st.wantedWord));
     }
-    if (st.index > 5) {
-      print('lost');
+    if (st.index >= 5) {
       return emit(WordleLost(
           guessedWords: w, index: st.index, wantedWord: st.wantedWord));
     }
+    print(st.index + 1);
     emit(WordlePlaying(
       guessedWords: w,
       index: st.index + 1,
       wantedWord: st.wantedWord,
     ));
   }
-}
-
-Map<String, int> countLetters(String word) {
-  final Map<String, int> letters = {};
-  for (int i = 0; i < word.length; i++) {
-    letters.containsKey(word[i])
-        ? letters[word[i]] = letters[word[i]]! + 1
-        : letters[word[i]] = 1;
-  }
-  return letters;
-}
-
-List<Letter> calculate(Map<String, int> map, String wanted, List<Letter> word) {
-  for (var i = 0; i < wanted.length; i++) {
-    //
-    if (map.containsKey(word[i].letter) && wanted[i] == word[i].letter) {
-      word[i] = Letter(letter: word[i].letter, status: LetterStatus.correct);
-      map[word[i].letter] == 1
-          ? map.remove(word[i].letter)
-          : map[word[i].letter] = map[word[i].letter]! - 1;
-      //
-    } else if (map.containsKey(word[i].letter)) {
-      word[i] = Letter(letter: word[i].letter, status: LetterStatus.inWord);
-      map[word[i].letter] == 1
-          ? map.remove(word[i].letter)
-          : map[word[i].letter] = map[word[i].letter]! - 1;
-      //
-    } else if (!map.containsKey(word[i].letter)) {
-      word[i] = Letter(letter: word[i].letter, status: LetterStatus.notInWord);
-    }
-  }
-  return word;
 }

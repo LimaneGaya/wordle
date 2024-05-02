@@ -6,6 +6,7 @@ enum LetterStatus {
   notInWord,
   inWord,
   correct,
+  key,
 }
 
 class Letter extends Equatable {
@@ -21,6 +22,8 @@ class Letter extends Equatable {
         return Colors.brown;
       case LetterStatus.correct:
         return Colors.greenAccent.shade700;
+      case LetterStatus.key:
+        return Colors.grey.shade500;
     }
   }
 
